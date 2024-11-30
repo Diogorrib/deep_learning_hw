@@ -60,7 +60,7 @@ class LogisticRegression(LinearModel):
         y_i: the gold label for that example
         learning_rate (float): keep it at the default value for your plots
         """
-        # Q1.2 (a)
+        # Q1.2 (a, b)
         scores = np.expand_dims(self.W.dot(x_i), axis = 1)
 
         y_one_hot = np.zeros((np.size(self.W, 0),1))
@@ -69,9 +69,11 @@ class LogisticRegression(LinearModel):
         exp_scores = np.exp(scores - np.max(scores))
         softmax_probs = exp_scores / np.sum(exp_scores)
 
-        self.W += (y_one_hot - softmax_probs).dot(np.expand_dims(x_i, axis = 1).T)
+        loss_w = (softmax_probs - y_one_hot).dot(np.expand_dims(x_i, axis = 1).T)
+        l2_reg_term = l2_penalty * self.W
 
-        #raise NotImplementedError # Q1.2 (b)
+        gradient = loss_w + l2_reg_term
+        self.W -= learning_rate * gradient
 
 
 class MLP(object):
