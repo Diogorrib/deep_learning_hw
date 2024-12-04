@@ -79,12 +79,36 @@ class LogisticRegression(LinearModel):
 class MLP(object):
     def __init__(self, n_classes, n_features, hidden_size):
         # Initialize an MLP with a single hidden layer.
-        raise NotImplementedError # Q1.3 (a)
+        mean, std = 0.1, 0.1
+        self.n_classes = n_classes
+
+        self.W1 = np.random.normal(mean, std, (hidden_size, n_features)) #input-hidden
+        self.b1 = np.zeros((hidden_size))
+
+        self.W2 = np.random.normal(mean, std, (n_classes, hidden_size)) #hidden-output
+        self.b2 = np.zeros((n_classes))
+
+    def forward_propagation(self, X, expand):
+        # ReLU activation
+        z1 = self.W1.dot(X.T) + (np.expand_dims(self.b1, axis = 1) if expand else self.b1)
+        h1 = np.maximum(0, z1)
+
+        # softmax activation
+        z2 = self.W2.dot(h1) + (np.expand_dims(self.b2, axis = 1) if expand else self.b2)
+        aux = np.exp(z2 - np.max(z2))
+        y_hat = aux / np.sum(aux)
+
+        return z1, h1, y_hat
 
     def predict(self, X):
         # Compute the forward pass of the network. At prediction time, there is
         # no need to save the values of hidden nodes.
-        raise NotImplementedError # Q1.3 (a)
+
+        _, _, y_hat = self.forward_propagation(X, expand=True)
+
+        predicted_labels = np.argmax(y_hat, axis=0)  # For multi-class classification
+
+        return predicted_labels
 
     def evaluate(self, X, y):
         """
@@ -96,12 +120,45 @@ class MLP(object):
         n_correct = (y == y_hat).sum()
         n_possible = y.shape[0]
         return n_correct / n_possible
+    
+    def gradient_and_adjust_dims(self, loss_gradient, h):
+        adjs_loss_gradient = np.expand_dims(loss_gradient, axis=1)
+        adjs_h = np.expand_dims(h, axis=1)
+        return adjs_loss_gradient.dot(adjs_h.T)
 
     def train_epoch(self, X, y, learning_rate=0.001, **kwargs):
         """
         Dont forget to return the loss of the epoch.
         """
-        raise NotImplementedError # Q1.3 (a)
+        loss = 0
+        for x_i, y_i in zip(X, y):
+            # Forward Propagation
+            z1, h1, y_hat = self.forward_propagation(x_i, False)
+
+            y_one_hot = np.zeros((self.n_classes,))
+            y_one_hot[y_i] = 1
+
+            # Calculate the loss
+            loss += -y_one_hot.dot(np.log(y_hat+1e-15)) # add 1e-15 to avoid log(0)
+
+            # Backpropagation
+            loss_gradient_output = y_hat - y_one_hot # cross-entropy derivative
+
+            gradient_w2 = self.gradient_and_adjust_dims(loss_gradient_output, h1)
+            gradient_b2 = loss_gradient_output
+
+            gradient_below = self.W2.T.dot(loss_gradient_output)
+            gradient_below_before_activation = np.multiply(gradient_below, np.where(z1 > 0, 1, 0)) # ReLU derivative
+
+            gradient_w1 = self.gradient_and_adjust_dims(gradient_below_before_activation, x_i)
+            gradient_b1 = gradient_below_before_activation
+
+            # Updates
+            self.W1 -= learning_rate * gradient_w1
+            self.b1 -= learning_rate * gradient_b1
+            self.W2 -= learning_rate * gradient_w2
+            self.b2 -= learning_rate * gradient_b2
+        return loss
 
 
 def plot(epochs, train_accs, val_accs, filename=None):
