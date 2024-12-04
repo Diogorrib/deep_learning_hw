@@ -74,9 +74,9 @@ Note: learning_rate = [0.00001; 0.001; 0.1]
     - validation accuracy:  0.3091
     - test accuracy:        0.3093
 
-![Q2-logistic_regression-training-loss-lr-0.00001](img/)
-![Q2-logistic_regression-training-loss-lr-0.001](img/)
-![Q2-logistic_regression-training-loss-lr-0.1](img/)
+![Q2-logistic_regression-training-loss-lr-0.00001](img/logistic_regression-training-loss-batch-32-lr-1e-05-epochs-100-l2-0.01-opt-sgd.png)
+![Q2-logistic_regression-training-loss-lr-0.001](img/logistic_regression-training-loss-batch-32-lr-0.001-epochs-100-l2-0.01-opt-sgd.png)
+![Q2-logistic_regression-training-loss-lr-0.1](img/logistic_regression-training-loss-batch-32-lr-0.1-epochs-100-l2-0.01-opt-sgd.png)
 
 Best validation accuracy for learning rate 0.001 (validation accuracy = 0.4751)
 
@@ -102,8 +102,8 @@ python hw1-q2.py mlp -batch_size 512
     - test accuracy:        0.5190
     - time execution:       2 minutes and 6 seconds
 
-![Q2-mlp-training-loss-batch-64](img/)
-![Q2-mlp-training-loss-batch-512](img/)
+![Q2-mlp-training-loss-batch-64](img/mlp-training-loss-batch-64-lr-0.002-epochs-200-hidden-200-dropout-0.3-l2-0.0-layers-2-act-relu-opt-sgd-mom-0.0.png)
+![Q2-mlp-training-loss-batch-512](img/mlp-training-loss-batch-512-lr-0.002-epochs-200-hidden-200-dropout-0.3-l2-0.0-layers-2-act-relu-opt-sgd-mom-0.0.png)
 
 The best performance is observed with the default batch size (64). However, the execution time is shorter with the batch size set to 512. Even though a lower batch size allows the model to learn more effectively and capture specific patterns in the data, allowing for better accuracy. But possibly leading to overfitting (what can be seen in the loss plots, in which the validation loss flattens regardless of the dropping related with the training set). Aditionally, it is more computationally demanding because the weights need to be updated more frequently — specifically, dataset_size / batch_size times.
 
@@ -115,9 +115,9 @@ python hw1-q2.py mlp -dropout 0.25
 python hw1-q2.py mlp -dropout 0.5
 ```
 
-![Q2-mlp-training-loss-dropout-0.01](img/)
-![Q2-mlp-training-loss-dropout-0.25](img/)
-![Q2-mlp-training-loss-dropout-0.5](img/)
+![Q2-mlp-training-loss-dropout-0.01](img/mlp-training-loss-batch-64-lr-0.002-epochs-200-hidden-200-dropout-0.01-l2-0.0-layers-2-act-relu-opt-sgd-mom-0.0.png)
+![Q2-mlp-training-loss-dropout-0.25](img/mlp-training-loss-batch-64-lr-0.002-epochs-200-hidden-200-dropout-0.25-l2-0.0-layers-2-act-relu-opt-sgd-mom-0.0.png)
+![Q2-mlp-training-loss-dropout-0.5](img/mlp-training-loss-batch-64-lr-0.002-epochs-200-hidden-200-dropout-0.5-l2-0.0-layers-2-act-relu-opt-sgd-mom-0.0.png)
 
 - dropout = 0.01
     - validation accuracy:  0.5762
@@ -142,3 +142,6 @@ python hw1-q2.py mlp -batch_size 1024 -momentum 0.9
 - momentum = 0.9
     - validation accuracy:  0.5990
     - test accuracy:        0.6010
+
+![Q2-mlp-training-loss-mom-0.0](img/mlp-training-loss-batch-1024-lr-0.002-epochs-200-hidden-200-dropout-0.3-l2-0.0-layers-2-act-relu-opt-sgd-mom-0.0.png)
+![Q2-mlp-training-loss-mom-0.9](img/mlp-training-loss-batch-1024-lr-0.002-epochs-200-hidden-200-dropout-0.3-l2-0.0-layers-2-act-relu-opt-sgd-mom-0.9.png)
