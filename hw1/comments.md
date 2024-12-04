@@ -1,6 +1,9 @@
 # Question 1
 
 ### 1a
+```
+python hw1-q1.py perceptron -epochs 100
+```
 - training accuracy:    0.5598
 - validation accuracy:  0.3868
 - test accuracy:        0.3743
@@ -9,12 +12,18 @@
 
 
 ### 2a
+```
+python hw1-q1.py logistic_regression -epochs 100
+```
 - test accuracy:    0.4597
 
 ![Q1-logistic_regression_without_l2_regularization-accs](img/Q1-logistic_regression_without_l2_regularization-accs.png)
 
 
 ### 2b
+```
+python hw1-q1.py logistic_regression -epochs 100 -l2_penalty 0.01
+```
 - test accuracy:    0.5053
 
 ![Q1-logistic_regression_with_l2_regularization-accs](img/Q1-logistic_regression_with_l2_regularization-accs.png)
@@ -38,8 +47,98 @@ As _l2_ regularization, using _l1_ regularization the weights are smaller than n
 
 
 ### 3a
-
+```
+python hw1-q1.py mlp
+```
 - test accuracy:    0.5417
 
 ![Q1-mpl-accs](img/Q1-mlp-accs.png)
 ![Q1-mpl-accs](img/Q1-mlp-loss.png)
+
+
+# Question 2
+
+### 1
+```
+python hw1-q2.py logistic_regression -epochs 100 -batch_size 32 -l2_decay 0.01 -learning_rate <learning_rate>
+```
+Note: learning_rate = [0.00001; 0.001; 0.1]
+
+- learning_rate = 0.00001
+    - validation accuracy:  0.2892
+    - test accuracy:        0.3087
+- learning_rate = 0.001
+    - validation accuracy:  0.4751
+    - test accuracy:        0.4827
+- learning_rate = 0.1
+    - validation accuracy:  0.3091
+    - test accuracy:        0.3093
+
+![Q2-logistic_regression-training-loss-lr-0.00001](img/)
+![Q2-logistic_regression-training-loss-lr-0.001](img/)
+![Q2-logistic_regression-training-loss-lr-0.1](img/)
+
+Best validation accuracy for learning rate 0.001 (validation accuracy = 0.4751)
+
+As it is possible to observe by the validation accuracy results and by the validation loss curves, from learning rates tested the closest to be optimal is `0.001`.
+
+It is perceivable that with very low (like `0.00001`) learning rates the curve is almost straight, and the weights are being updated steadly but very slowly, which does not make possible to verify any aprroximation to a convergence point in which the loss curve reaches a minimum.
+
+That is not the case when looking at the curve asssociated with the l.r. that lead to the best result. We can notice the loss decreases smoothly, almost flattening along the epochs which indicates convergence.
+
+In the other hand, a very high learning rate (like `0.1`) cause the loss to fluctuate and possible increase, which shows instability, overshooting the minimum and bouncing around instead of settling.
+
+### 2a
+```
+python hw1-q2.py mlp
+python hw1-q2.py mlp -batch_size 512
+```
+- batch_size default
+    - validation accuracy:  0.6061
+    - test accuracy:        0.6073
+    - time execution:       3 minutes and 51 seconds
+- batch_size 512
+    - validation accuracy:  0.5028
+    - test accuracy:        0.5190
+    - time execution:       2 minutes and 6 seconds
+
+![Q2-mlp-training-loss-batch-64](img/)
+![Q2-mlp-training-loss-batch-512](img/)
+
+The best performance is observed with the default batch size (64). However, the execution time is shorter with the batch size set to 512. Even though a lower batch size allows the model to learn more effectively and capture specific patterns in the data, allowing for better accuracy. But possibly leading to overfitting (what can be seen in the loss plots, in which the validation loss flattens regardless of the dropping related with the training set). Aditionally, it is more computationally demanding because the weights need to be updated more frequently — specifically, dataset_size / batch_size times.
+
+
+### 2b
+```
+python hw1-q2.py mlp -dropout 0.01
+python hw1-q2.py mlp -dropout 0.25
+python hw1-q2.py mlp -dropout 0.5
+```
+
+![Q2-mlp-training-loss-dropout-0.01](img/)
+![Q2-mlp-training-loss-dropout-0.25](img/)
+![Q2-mlp-training-loss-dropout-0.5](img/)
+
+- dropout = 0.01
+    - validation accuracy:  0.5762
+    - test accuracy:        0.5803
+- dropout = 0.025
+    - validation accuracy:  0.6083
+    - test accuracy:        0.6057
+- dropout = 0.5
+    - validation accuracy:  0.5990
+    - test accuracy:        0.5960
+
+
+### 2c
+```
+python hw1-q2.py mlp -batch_size 1024 -momentum 0.0
+python hw1-q2.py mlp -batch_size 1024 -momentum 0.9
+```
+
+- momentum = 0.0
+    - validation accuracy:  0.4701
+    - test accuracy:        0.4883
+- momentum = 0.9
+    - validation accuracy:  0.5990
+    - test accuracy:        0.6010

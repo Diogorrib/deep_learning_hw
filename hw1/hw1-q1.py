@@ -133,7 +133,7 @@ class MLP(object):
         loss = 0
         for x_i, y_i in zip(X, y):
             # Forward Propagation
-            z1, h1, y_hat = self.forward_propagation(x_i, False)
+            z1, h1, y_hat = self.forward_propagation(x_i, expand=False)
 
             y_one_hot = np.zeros((self.n_classes,))
             y_one_hot[y_i] = 1

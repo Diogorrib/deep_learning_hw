@@ -26,9 +26,12 @@ class LogisticRegression(nn.Module):
         pytorch to make weights and biases, have a look at
         https://pytorch.org/docs/stable/nn.html
         """
-        super().__init__()
         # In a pytorch module, the declarations of layers needs to come after
         # the super __init__ line, otherwise the magic doesn't work.
+        super(LogisticRegression, self).__init__()
+        self.layer = nn.Linear(n_features, n_classes)
+        self.activation = nn.Softmax(dim=1)
+
 
     def forward(self, x, **kwargs):
         """
@@ -44,7 +47,7 @@ class LogisticRegression(nn.Module):
         forward pass -- this is enough for it to figure out how to do the
         backward pass.
         """
-        raise NotImplementedError
+        return self.activation(self.layer(x))
 
 
 class FeedforwardNetwork(nn.Module):
@@ -63,9 +66,17 @@ class FeedforwardNetwork(nn.Module):
         attributes that each FeedforwardNetwork instance has. Note that nn
         includes modules for several activation functions and dropout as well.
         """
-        super().__init__()
-        # Implement me!
-        raise NotImplementedError
+        super(FeedforwardNetwork, self).__init__()
+        
+        self.layers = nn.ModuleList()
+        self.layers.append(nn.Linear(n_features, hidden_size))
+        for _ in range(layers-1):
+            self.layers.append(nn.Linear(hidden_size, hidden_size)) 
+        self.output_layer = nn.Linear(hidden_size, n_classes)
+
+
+        self.activation = nn.ReLU() if activation_type == 'relu' else nn.Tanh()
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, **kwargs):
         """
@@ -75,7 +86,10 @@ class FeedforwardNetwork(nn.Module):
         the output logits from x. This will include using various hidden
         layers, pointwise nonlinear functions, and dropout.
         """
-        raise NotImplementedError
+        for layer in self.layers:
+            x = self.activation(layer(x))
+            x = self.dropout(x)
+        return self.output_layer(x)
 
 
 def train_batch(X, y, model, optimizer, criterion, **kwargs):
@@ -96,7 +110,15 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
     This function should return the loss (tip: call loss.item()) to get the
     loss as a numerical value that is not part of the computation graph.
     """
-    raise NotImplementedError
+    optimizer.zero_grad()
+
+    y_hat = model(X)
+    loss = criterion(y_hat, y)
+
+    loss.backward() # compute the gradients
+    optimizer.step() # update weights
+
+    return loss.item()
 
 
 def predict(model, X):
