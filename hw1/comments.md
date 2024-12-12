@@ -105,8 +105,9 @@ python hw1-q2.py mlp -batch_size 512
 ![Q2-mlp-training-loss-batch-64](img/mlp-training-loss-batch-64-lr-0.002-epochs-200-hidden-200-dropout-0.3-l2-0.0-layers-2-act-relu-opt-sgd-mom-0.0.png)
 ![Q2-mlp-training-loss-batch-512](img/mlp-training-loss-batch-512-lr-0.002-epochs-200-hidden-200-dropout-0.3-l2-0.0-layers-2-act-relu-opt-sgd-mom-0.0.png)
 
-The best performance is observed with the default batch size (64). However, the execution time is shorter with the batch size set to 512. Even though a lower batch size allows the model to learn more effectively and capture specific patterns in the data, allowing for better accuracy. But possibly leading to overfitting (what can be seen in the loss plots, in which the validation loss flattens regardless of the dropping related with the training set). Aditionally, it is more computationally demanding because the weights need to be updated more frequently — specifically, dataset_size / batch_size times.
+The best performance is observed with the default batch size (64). However, the execution time is shorter with the batch size set to 512. This happens because the weights need to be updated less frequently — specifically, dataset_size / batch_size times. Having a lower batch size implies a more computationally demanding classification task.
 
+Despite this, a lower batch size allows the model to learn more effectively and capture specific patterns in the data, leading to a better accuracy. Even though, it tends to overfitting (what can be seen in the loss plots, in which the validation loss flattens regardless of the dropping related with the training loss).
 
 ### 2b
 ```
@@ -122,12 +123,16 @@ python hw1-q2.py mlp -dropout 0.5
 - dropout = 0.01
     - validation accuracy:  0.5762
     - test accuracy:        0.5803
-- dropout = 0.025
+- dropout = 0.25
     - validation accuracy:  0.6083
     - test accuracy:        0.6057
 - dropout = 0.5
     - validation accuracy:  0.5990
     - test accuracy:        0.5960
+
+Using a low dropout value (e.g. 0.01) only a small fraction of neurons are inactive during training, which translates in a minimal impact in terms of preventing overfitting (this is evident in the loss graph, where for this dropout rate it shows the most pronounced signs of overfitting). When dropout value is 0.5, half neurons are inactive during each training epoch, besides improving in generalization, it may start to excessively limit the network’s capacity to learn patterns, particularly in some cases where the model struggles to converge effectively within each epoch, what is translated in a decreasing of performance. The drop in accuracy from 0.25 enforce this fact.
+
+The best results are from training with dropout 0.25, which may indicate a better trade-off between overfitting and underfitting risks. 
 
 
 ### 2c
@@ -145,3 +150,7 @@ python hw1-q2.py mlp -batch_size 1024 -momentum 0.9
 
 ![Q2-mlp-training-loss-mom-0.0](img/mlp-training-loss-batch-1024-lr-0.002-epochs-200-hidden-200-dropout-0.3-l2-0.0-layers-2-act-relu-opt-sgd-mom-0.0.png)
 ![Q2-mlp-training-loss-mom-0.9](img/mlp-training-loss-batch-1024-lr-0.002-epochs-200-hidden-200-dropout-0.3-l2-0.0-layers-2-act-relu-opt-sgd-mom-0.9.png)
+
+It is possible to verify that with a higher momentum it is achieved a better performance.
+From the plots it can be seen that the convergence is faster when a momentum is applied. Hence, less epochs are needed for assisting to smaller loss values.
+Moreover, the account for the weight of past gradients in the updates helps the algorithm to avoid being stuck in local minimum or saddle points and to get closer to the global minimum, attainning higher accuracy values.
