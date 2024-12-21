@@ -1,0 +1,38 @@
+# Ignore .npz files
+*.npz
+
+# Ignore Python bytecode
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore IDE and editor-specific files
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+*.project
+*.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# MacOS
+.DS_Store
+
+# Windows thumbnail cache files
+Thumbs.db
+
+# Ignore virtual environment directories
+venv/
+env/
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.swp
+*.bak
