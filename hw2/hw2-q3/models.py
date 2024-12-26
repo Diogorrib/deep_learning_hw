@@ -87,15 +87,27 @@ class Encoder(nn.Module):
         # - Use torch.nn.utils.rnn.pad_packed_sequence to unpack the packed sequences
         #   (after passing them to the LSTM)
         #############################################
+        print(src.shape)
+        print(lengths.shape)
+        embedded = self.embedding(src)
+        embedded = self.dropout(embedded)
         
-
+        packed_embedded = pack(embedded, lengths, batch_first=True, enforce_sorted=False)
+        packed_output, final_hidden = self.lstm(packed_embedded)
+        enc_output, _ = unpack(packed_output, batch_first=True)
+        enc_output = self.dropout(enc_output)
+        
+        print(enc_output.shape)
+        print(final_hidden[0].shape)
+        print(final_hidden[1].shape)
+        return enc_output, final_hidden
+        
         #############################################
         # END OF YOUR CODE
         #############################################
         # enc_output: (batch_size, max_src_len, hidden_size)
         # final_hidden: tuple with 2 tensors
         # each tensor is (num_layers * num_directions, batch_size, hidden_size)
-        raise NotImplementedError("Add your implementation.")
 
 
 class Decoder(nn.Module):
@@ -158,6 +170,43 @@ class Decoder(nn.Module):
         #         src_lengths,
         #     )
         #############################################
+
+        # Embed the target sequences
+        embedded = self.embedding(tgt)
+        embedded = self.dropout(embedded)
+        
+        # Initialize outputs
+        outputs = []
+        
+        # Loop over each time step
+        for t in range(tgt.size(1)):
+            # Get the input for the current time step
+            input_t = embedded[:, t, :].unsqueeze(1)
+            
+            # Pass through the LSTM
+            output, dec_state = self.lstm(input_t, dec_state)
+            
+            # Apply attention if available
+            if self.attn is not None:
+                output = self.attn(output, encoder_outputs, src_lengths)
+            
+            # Apply dropout
+            output = self.dropout(output)
+            
+            # Append the output
+            outputs.append(output)
+        
+        # Concatenate outputs along the time dimension
+        outputs = torch.cat(outputs, dim=1)
+        
+        return outputs, dec_state
+
+    def reshape_state(self, dec_state):
+        # Reshape the decoder state to be of size (num_layers, batch_size, 2*hidden_size)
+        h, c = dec_state
+        h = h.view(1, -1, self.hidden_size * 2)
+        c = c.view(1, -1, self.hidden_size * 2)
+        return (h, c)
         
 
         #############################################

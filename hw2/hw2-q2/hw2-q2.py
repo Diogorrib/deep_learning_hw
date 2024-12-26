@@ -25,21 +25,29 @@ class ConvBlock(nn.Module):
             batch_norm=True,
             dropout=0.0
         ):
-        super().__init__()
+        super(ConvBlock, self).__init__()
 
-        # Q2.1. Initialize convolution, maxpool, activation and dropout layers 
+        # Q2.1. Initialize convolution, maxpool, activation and dropout layers
+        # from statement: kernel_size=3x3, stride=1, padding=1
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=padding)
+        # from statement: kernel_size=2x2, stride=2
+        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2) if maxpool else nn.Identity()
+        # from statement: dropout=0.1
+        self.dropout = nn.Dropout2d(dropout)
         
-        
-        # Q2.2 Initialize batchnorm layer 
-        
-        raise NotImplementedError
+        # Q2.2 Initialize batchnorm layer
+        self.batch_norm = nn.BatchNorm2d(out_channels) if batch_norm else nn.Identity()
 
     def forward(self, x):
         # input for convolution is [b, c, w, h]
         
         # Implement execution of layers in right order
-
-        raise NotImplementedError
+        x = self.conv(x)
+        x = self.batch_norm(x)
+        x = F.relu(x)
+        x = self.maxpool(x)
+        x = self.dropout(x)
+        return x
 
 
 class CNN(nn.Module):
@@ -50,24 +58,63 @@ class CNN(nn.Module):
         fc2_out_dim = 512
         self.maxpool = maxpool
         self.batch_norm = batch_norm
+        self.conv_bias = conv_bias
 
         # Initialize convolutional blocks
+        self.conv_blocks = []
+        for i in range(len(channels) - 1):
+            self.conv_blocks.append(
+                ConvBlock(
+                    in_channels=channels[i], 
+                    out_channels=channels[i + 1], 
+                    kernel_size=3, 
+                    padding=1,
+                    maxpool=maxpool,
+                    batch_norm=batch_norm,
+                    dropout=0.1
+                    )
+            )
+            
         
         # Initialize layers for the MLP block
+        if batch_norm:
+            self.in_features = channels[3]          # 128 channels
+        else:
+            self.in_features = channels[3] * 6 * 6  # 128 channels, 6x6 image size
+        self.fc1 = nn.Linear(in_features = self.in_features, out_features = fc1_out_dim)
+        self.dropout = nn.Dropout(dropout_prob)
+        self.fc2 = nn.Linear(in_features = fc1_out_dim, out_features = fc2_out_dim)
+        
+        num_classes = 6
+        self.fc_out = nn.Linear(in_features = fc2_out_dim, out_features = num_classes)
+
         # For Q2.2 initalize batch normalization
+        if batch_norm:
+            self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+            self.bnorm = nn.BatchNorm1d(channels[3])
         
 
     def forward(self, x):
         x = x.reshape(x.shape[0], 3, 48, -1)
 
         # Implement execution of convolutional blocks 
-        
-        # Flattent output of the last conv block
-        
+        for conv in self.conv_blocks :
+            x = conv(x)
+
+        if self.batch_norm:
+            # For Q2.2 implement global averag pooling
+            x = self.avg_pool(x)
+            x = torch.squeeze(x) # remove dimensions of size 1
+            x = self.bnorm(x)
+        else:
+            # Flattent output of the last conv block
+            x = x.view(-1, self.in_features)
+
         # Implement MLP part
-        
-        # For Q2.2 implement global averag pooling
-        
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = F.relu(self.fc2(x))
+        x = self.fc_out(x)
 
         return F.log_softmax(x, dim=1)
  
@@ -123,7 +170,9 @@ def plot(epochs, plottable, ylabel='', name=''):
 
 
 def get_number_trainable_params(model):
-    raise NotImplementedError
+    model_parameters_cnn = filter(lambda p: p.requires_grad, model.parameters())
+    params_cnn = sum([np.prod(p.size()) for p in model_parameters_cnn])
+    return params_cnn
 
 
 def plot_file_name_sufix(opt, exlude):
