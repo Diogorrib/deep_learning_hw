@@ -34,7 +34,7 @@ class ConvBlock(nn.Module):
         self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2) if maxpool else nn.Identity()
         # from statement: dropout=0.1
         self.dropout = nn.Dropout2d(dropout)
-        
+
         # Q2.2 Initialize batchnorm layer
         self.batch_norm = nn.BatchNorm2d(out_channels) if batch_norm else nn.Identity()
 
@@ -65,17 +65,16 @@ class CNN(nn.Module):
         for i in range(len(channels) - 1):
             self.conv_blocks.append(
                 ConvBlock(
-                    in_channels=channels[i], 
-                    out_channels=channels[i + 1], 
-                    kernel_size=3, 
+                    in_channels=channels[i],
+                    out_channels=channels[i + 1],
+                    kernel_size=3,
                     padding=1,
                     maxpool=maxpool,
                     batch_norm=batch_norm,
                     dropout=0.1
-                    )
+                )
             )
-            
-        
+
         # Initialize layers for the MLP block
         if batch_norm:
             self.in_features = channels[3]          # 128 channels
@@ -84,7 +83,7 @@ class CNN(nn.Module):
         self.fc1 = nn.Linear(in_features = self.in_features, out_features = fc1_out_dim)
         self.dropout = nn.Dropout(dropout_prob)
         self.fc2 = nn.Linear(in_features = fc1_out_dim, out_features = fc2_out_dim)
-        
+
         num_classes = 6
         self.fc_out = nn.Linear(in_features = fc2_out_dim, out_features = num_classes)
 
@@ -92,13 +91,13 @@ class CNN(nn.Module):
         if batch_norm:
             self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
             self.bnorm = nn.BatchNorm1d(channels[3])
-        
+
 
     def forward(self, x):
         x = x.reshape(x.shape[0], 3, 48, -1)
 
         # Implement execution of convolutional blocks 
-        for conv in self.conv_blocks :
+        for conv in self.conv_blocks:
             x = conv(x)
 
         if self.batch_norm:
@@ -117,7 +116,7 @@ class CNN(nn.Module):
         x = self.fc_out(x)
 
         return F.log_softmax(x, dim=1)
- 
+
 
 def train_batch(X, y, model, optimizer, criterion, **kwargs):
     """

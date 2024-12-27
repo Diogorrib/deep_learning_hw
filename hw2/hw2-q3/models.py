@@ -87,8 +87,7 @@ class Encoder(nn.Module):
         # - Use torch.nn.utils.rnn.pad_packed_sequence to unpack the packed sequences
         #   (after passing them to the LSTM)
         #############################################
-        print(src.shape)
-        print(lengths.shape)
+
         embedded = self.embedding(src)
         embedded = self.dropout(embedded)
         
@@ -96,10 +95,7 @@ class Encoder(nn.Module):
         packed_output, final_hidden = self.lstm(packed_embedded)
         enc_output, _ = unpack(packed_output, batch_first=True)
         enc_output = self.dropout(enc_output)
-        
-        print(enc_output.shape)
-        print(final_hidden[0].shape)
-        print(final_hidden[1].shape)
+
         return enc_output, final_hidden
         
         #############################################
@@ -198,24 +194,19 @@ class Decoder(nn.Module):
         
         # Concatenate outputs along the time dimension
         outputs = torch.cat(outputs, dim=1)
+
+        if outputs.shape[1] > 1:
+            outputs = outputs[:, :-1, :]
+
         
         return outputs, dec_state
-
-    def reshape_state(self, dec_state):
-        # Reshape the decoder state to be of size (num_layers, batch_size, 2*hidden_size)
-        h, c = dec_state
-        h = h.view(1, -1, self.hidden_size * 2)
-        c = c.view(1, -1, self.hidden_size * 2)
-        return (h, c)
         
-
         #############################################
         # END OF YOUR CODE
         #############################################
         # outputs: (batch_size, max_tgt_len, hidden_size)
         # dec_state: tuple with 2 tensors
         # each tensor is (num_layers, batch_size, hidden_size)
-        raise NotImplementedError("Add your implementation.")
 
 
 class Seq2Seq(nn.Module):
