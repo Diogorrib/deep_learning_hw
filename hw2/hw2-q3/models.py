@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence as pack
 from torch.nn.utils.rnn import pad_packed_sequence as unpack
 
@@ -20,8 +21,17 @@ class BahdanauAttention(nn.Module):
 
     def __init__(self, hidden_size):
         super(BahdanauAttention, self).__init__()
+        self.hidden_size = hidden_size
         
-        raise NotImplementedError("Add your implementation.")
+        # Linear layers for encoder hidden states (Wh) and decoder hidden state (Ws)
+        self.W_h = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.W_s = nn.Linear(hidden_size, hidden_size, bias=False)
+        
+        # Scoring vector (v)
+        self.v = nn.Linear(hidden_size, 1, bias=False)
+        
+        # Output layer for context and query combination
+        self.W_out = nn.Linear(hidden_size*2, hidden_size, bias=False)
 
     def forward(self, query, encoder_outputs, src_lengths):
         """
@@ -31,8 +41,35 @@ class BahdanauAttention(nn.Module):
         Returns:
             attn_out:   (batch_size, max_tgt_len, hidden_size) - attended vector
         """
+        # Extract dimensions
+        batch_size, tgt_len, hidden_size = query.size()
+        _, src_len, _ = encoder_outputs.size()
 
-        raise NotImplementedError("Add your implementation.")
+        # Expand query to match encoder outputs
+        query_expanded = query.unsqueeze(2).expand(-1, -1, src_len, -1)  # (batch, tgt_len, src_len, hidden_size)
+        encoder_expanded = encoder_outputs.unsqueeze(1).expand(-1, tgt_len, -1, -1)  # (batch, tgt_len, src_len, hidden_size)
+
+        # Compute alignment scores
+        score = self.v(
+            torch.tanh(
+                self.W_s(query_expanded) + self.W_h(encoder_expanded)
+            )
+        ).squeeze(-1)  # (batch, tgt_len, src_len)
+
+        # Apply masking for padding in encoder_outputs
+        mask = self.sequence_mask(src_lengths).unsqueeze(1)  # (batch, 1, src_len)
+        score = score.masked_fill(~mask, float('-inf'))
+
+        # Calculate attention weights
+        alignment = F.softmax(score, dim=-1)  # (batch, tgt_len, src_len)
+
+        # Compute context vector
+        context = torch.bmm(alignment, encoder_outputs)  # (batch, tgt_len, hidden_size)
+
+        # Concatenate context and query, then pass through LT
+        attn_out = torch.tanh(self.W_out(torch.cat([context, query], dim=-1)))  # (batch, tgt_len, hidden_size)
+
+        return attn_out
 
     def sequence_mask(self, lengths):
         """
@@ -195,10 +232,6 @@ class Decoder(nn.Module):
         # Concatenate outputs along the time dimension
         outputs = torch.cat(outputs, dim=1)
 
-        if outputs.shape[1] > 1:
-            outputs = outputs[:, :-1, :]
-
-        
         return outputs, dec_state
         
         #############################################
@@ -238,7 +271,7 @@ class Seq2Seq(nn.Module):
             dec_hidden = final_enc_state
 
         output, dec_hidden = self.decoder(
-            tgt, dec_hidden, encoder_outputs, src_lengths
+            tgt[:, :-1], dec_hidden, encoder_outputs, src_lengths
         )
 
         return self.generator(output), dec_hidden

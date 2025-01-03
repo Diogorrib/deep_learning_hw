@@ -7,6 +7,7 @@ import numpy as np
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 import matplotlib.pyplot as plt
@@ -231,7 +232,22 @@ def nucleus_sampling(logits, p=0.8):
     # 3. Rescale the distribution and sample from the resulting set of tokens.
     # Implementation of the steps as described above:
 
-    raise NotImplementedError("Add your implementation.")
+    probabilities = F.softmax(logits, dim = -1) # (vocab_size,)
+
+    sorted_probs, sorted_indices = torch.sort(probabilities, descending = True)
+    cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
+
+    mask = cumulative_probs <= p
+    mask[1:] = mask[:-1].clone() #includes token that exceed p prob. cumsum
+    mask[0] = True #ensures at least one token is included
+
+    filtered_probs = sorted_probs[mask]
+    filtered_indices = sorted_indices[mask]
+
+    filtered_probs = filtered_probs / filtered_probs.sum()
+
+    next_token = torch.multinomial(filtered_probs, num_samples=1)
+    return filtered_indices[next_token]
 
 
 def main(args):
