@@ -33,7 +33,7 @@ class ConvBlock(nn.Module):
         # from statement: kernel_size=2x2, stride=2
         self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2) if maxpool else nn.Identity()
         # from statement: dropout=0.1
-        self.dropout = nn.Dropout2d(dropout)
+        self.dropout = nn.Dropout(dropout)
 
         # Q2.2 Initialize batchnorm layer
         self.batch_norm = nn.BatchNorm2d(out_channels) if batch_norm else nn.Identity()
@@ -86,11 +86,12 @@ class CNN(nn.Module):
 
         num_classes = 6
         self.fc_out = nn.Linear(in_features = fc2_out_dim, out_features = num_classes)
+        
 
         # For Q2.2 initalize batch normalization
         if batch_norm:
             self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-            self.bnorm = nn.BatchNorm1d(channels[3])
+            self.bnorm = nn.BatchNorm1d(fc1_out_dim)#channels[3])
 
 
     def forward(self, x):
@@ -104,13 +105,16 @@ class CNN(nn.Module):
             # For Q2.2 implement global averag pooling
             x = self.avg_pool(x)
             x = torch.squeeze(x) # remove dimensions of size 1
-            x = self.bnorm(x)
         else:
             # Flattent output of the last conv block
             x = x.view(-1, self.in_features)
 
         # Implement MLP part
         x = F.relu(self.fc1(x))
+
+        if self.batch_norm:
+            x = self.bnorm(x)
+
         x = self.dropout(x)
         x = F.relu(self.fc2(x))
         x = self.fc_out(x)
