@@ -25,7 +25,7 @@ class ConvBlock(nn.Module):
             batch_norm=True,
             dropout=0.0
         ):
-        super(ConvBlock, self).__init__()
+        super().__init__()
 
         # Q2.1. Initialize convolution, maxpool, activation and dropout layers
         # from statement: kernel_size=3x3, stride=1, padding=1
@@ -36,14 +36,14 @@ class ConvBlock(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
         # Q2.2 Initialize batchnorm layer
-        self.batch_norm = nn.BatchNorm2d(out_channels) if batch_norm else nn.Identity()
+        self.bnorm = nn.BatchNorm2d(out_channels) if batch_norm else nn.Identity()
 
     def forward(self, x):
         # input for convolution is [b, c, w, h]
         
         # Implement execution of layers in right order
         x = self.conv(x)
-        x = self.batch_norm(x)
+        x = self.bnorm(x)
         x = F.relu(x)
         x = self.maxpool(x)
         x = self.dropout(x)
@@ -61,7 +61,7 @@ class CNN(nn.Module):
         self.conv_bias = conv_bias
 
         # Initialize convolutional blocks
-        self.conv_blocks = []
+        self.conv_blocks = nn.ModuleList()
         for i in range(len(channels) - 1):
             self.conv_blocks.append(
                 ConvBlock(
@@ -91,7 +91,7 @@ class CNN(nn.Module):
         # For Q2.2 initalize batch normalization
         if batch_norm:
             self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-            self.bnorm = nn.BatchNorm1d(fc1_out_dim)#channels[3])
+            self.bnorm = nn.BatchNorm1d(fc1_out_dim)
 
 
     def forward(self, x):
