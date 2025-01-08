@@ -42,7 +42,7 @@ class BahdanauAttention(nn.Module):
             attn_out:   (batch_size, max_tgt_len, hidden_size) - attended vector
         """
         # Extract dimensions
-        batch_size, tgt_len, hidden_size = query.size()
+        _, tgt_len, _ = query.size()
         _, src_len, _ = encoder_outputs.size()
 
         # Expand query to match encoder outputs
@@ -66,7 +66,7 @@ class BahdanauAttention(nn.Module):
         # Compute context vector
         context = torch.bmm(alignment, encoder_outputs)  # (batch, tgt_len, hidden_size)
 
-        # Concatenate context and query, then pass through LT
+        # Concatenate context and query, then pass through Linear transformation
         attn_out = torch.tanh(self.W_out(torch.cat([context, query], dim=-1)))  # (batch, tgt_len, hidden_size)
 
         return attn_out
@@ -117,7 +117,7 @@ class Encoder(nn.Module):
         # src: (batch_size, max_src_len)
         # lengths: (batch_size)
         #############################################
-        # TODO: Implement the forward pass of the encoder
+        # Implemented the forward pass of the encoder
         # Hints:
         # - Use torch.nn.utils.rnn.pack_padded_sequence to pack the padded sequences
         #   (before passing them to the LSTM)
@@ -125,11 +125,15 @@ class Encoder(nn.Module):
         #   (after passing them to the LSTM)
         #############################################
 
+        # embed the source sequences and apply dropout
         embedded = self.embedding(src)
         embedded = self.dropout(embedded)
         
+        # pack the embeddings and pass through LSTM
         packed_embedded = pack(embedded, lengths, batch_first=True, enforce_sorted=False)
         packed_output, final_hidden = self.lstm(packed_embedded)
+
+        # unpack the embeddings and apply dropout
         enc_output, _ = unpack(packed_output, batch_first=True)
         enc_output = self.dropout(enc_output)
 
@@ -189,7 +193,7 @@ class Decoder(nn.Module):
             dec_state = reshape_state(dec_state)
 
         #############################################
-        # TODO: Implement the forward pass of the decoder
+        # Implemented the forward pass of the decoder
         # Hints:
         # - the input to the decoder is the previous target token,
         #   and the output is the next target token
@@ -197,36 +201,25 @@ class Decoder(nn.Module):
         #   the previous token representation and the previous decoder state
         # - Add this somewhere in the decoder loop when you implement the attention mechanism in 3.2:
         # if self.attn is not None:
-        #     output = self.attn(
-        #         output,
-        #         encoder_outputs,
-        #         src_lengths,
-        #     )
+        #     output = self.attn(output, encoder_outputs, src_lengths)
         #############################################
 
-        # Embed the target sequences
+        # embed the target sequences and apply dropout
         embedded = self.embedding(tgt)
         embedded = self.dropout(embedded)
         
-        # Initialize outputs
         outputs = []
         
-        # Loop over each time step
+        # loop over each time step
         for t in range(tgt.size(1)):
-            # Get the input for the current time step
+            # get the input for the current time step and pass through LSTM
             input_t = embedded[:, t, :].unsqueeze(1)
-            
-            # Pass through the LSTM
             output, dec_state = self.lstm(input_t, dec_state)
             
-            # Apply attention if available
             if self.attn is not None:
                 output = self.attn(output, encoder_outputs, src_lengths)
             
-            # Apply dropout
             output = self.dropout(output)
-            
-            # Append the output
             outputs.append(output)
         
         # Concatenate outputs along the time dimension

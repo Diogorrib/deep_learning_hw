@@ -224,8 +224,8 @@ def nucleus_sampling(logits, p=0.8):
     Returns:
         next_token: index of the next predicted token. Shape: (1,)
     """
-    # TODO: Top-p (nucleus) sampling  (https://arxiv.org/pdf/1904.09751 - Section 3.1)
-    # You are asked to implement the following steps:
+    # Top-p (nucleus) sampling  (https://arxiv.org/pdf/1904.09751 - Section 3.1)
+    # There were implemented the following steps:
     # 1. Transform the given logits into probabilities.
     # 2. Select the smallest set of tokens whose cumulative probability mass exceeds p.
     # This is equivalent to selecting the tokens with highest probabilities, whose cumulative probability mass equals or exceeds p.
@@ -238,7 +238,7 @@ def nucleus_sampling(logits, p=0.8):
     cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
 
     mask = cumulative_probs <= p
-    mask[1:] = mask[:-1].clone() #includes token that exceed p prob. cumsum
+    mask[1:] = mask[:-1].clone() #includes token that exceed p cumulative mass probability
     mask[0] = True #ensures at least one token is included
 
     filtered_probs = sorted_probs[mask]

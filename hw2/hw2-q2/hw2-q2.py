@@ -80,6 +80,7 @@ class CNN(nn.Module):
             self.in_features = channels[3]          # 128 channels
         else:
             self.in_features = channels[3] * 6 * 6  # 128 channels, 6x6 image size
+            
         self.fc1 = nn.Linear(in_features = self.in_features, out_features = fc1_out_dim)
         self.dropout = nn.Dropout(dropout_prob)
         self.fc2 = nn.Linear(in_features = fc1_out_dim, out_features = fc2_out_dim)
@@ -89,9 +90,8 @@ class CNN(nn.Module):
         
 
         # For Q2.2 initalize batch normalization
-        if batch_norm:
-            self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-            self.bnorm = nn.BatchNorm1d(fc1_out_dim)
+        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1)) if batch_norm else nn.Identity()
+        self.bnorm = nn.BatchNorm1d(fc1_out_dim) if batch_norm else nn.Identity()
 
 
     def forward(self, x):
@@ -100,21 +100,18 @@ class CNN(nn.Module):
         # Implement execution of convolutional blocks 
         for conv in self.conv_blocks:
             x = conv(x)
+        
+        # For Q2.2 implement global averag pooling
+        x = self.avg_pool(x)
 
         if self.batch_norm:
-            # For Q2.2 implement global averag pooling
-            x = self.avg_pool(x)
             x = torch.squeeze(x) # remove dimensions of size 1
         else:
-            # Flattent output of the last conv block
-            x = x.view(-1, self.in_features)
+            x = x.view(-1, self.in_features) # Flattent output of the last conv block
 
         # Implement MLP part
         x = F.relu(self.fc1(x))
-
-        if self.batch_norm:
-            x = self.bnorm(x)
-
+        x = self.bnorm(x)
         x = self.dropout(x)
         x = F.relu(self.fc2(x))
         x = self.fc_out(x)
